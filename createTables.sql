@@ -7,7 +7,7 @@ This will hold information about the items that the main operating room can have
 DROP TABLE IF EXISTS items;
 
 CREATE TABLE items(
-	item_id int(13) NOT NULL, 
+	item_id bigint(13) NOT NULL, 
 	/* 
 	The primary key for the items table.
 	Identification number of the item, unique for each item regardless of manufacturer.  
@@ -36,7 +36,7 @@ Used to track what is currently on stock in the store room inventory.
 DROP TABLE IF EXISTS inventory;
 
 CREATE TABLE inventory (
-	item_id int(13) NOT NULL UNIQUE, 
+	item_id bigint(13) NOT NULL UNIQUE, 
 	/* 
 	Foreign key from items table.  
 	Multiples of the same item just increases the quantity, so it it unique.
@@ -71,7 +71,7 @@ CREATE TABLE historical_usage (
 	/*
 	When an item from inventory is used.
 	*/
-	item_id int(13) NOT NULL, 
+	item_id bigint(13) NOT NULL, 
 	/*
 	The item from the inventory used.
 	*/
@@ -119,7 +119,7 @@ Connects to the vendors table using the vendor_id as a foreign key.
 DROP TABLE IF EXISTS vendor_prices;
 
 CREATE TABLE vendor_prices (
-	item_id int(13) NOT NULL, 
+	item_id bigint(13) NOT NULL, 
 	/*
 	Foreign key from the items table.
 	The item sold by the vendor.
@@ -175,14 +175,15 @@ Creates the orders table.
 Connects to the vendors table using vendor_id as a foreign key.
 Connects to the users table using user_id as a foreign key.
 Keeps track of all the orders that have been placed, whether they have been received or not.
+New orders will be made through another system, which will generate a .csv file to update the database.
 */
 DROP TABLE IF EXISTS orders;
 
 CREATE TABLE orders (
-	order_id int(13) NOT NULL AUTO_INCREMENT,
+	order_id int(13) NOT NULL,
 	/*
 	Primary key of the orders table.
-	Internal identification number for order, just auto increment for each new order.
+	Order number (order_id) will be provided by the .csv file.
 	*/
 	vendor_id int(4) NOT NULL,
 	/*
@@ -219,7 +220,7 @@ CREATE TABLE order_line_items (
 	Foreign key from the orders table.
 	The overall order of which this line item belongs to.
 	*/
-	item_id int(13) NOT NULL, 
+	item_id bigint(13) NOT NULL, 
 	/*
 	Foreign key from the items table.
 	The item being ordered on this line item.
