@@ -53,7 +53,7 @@ CREATE TABLE inventory (
 	/*
 	The reorder point for the item.  When quantity is below this, reorder.
 	*/
-	on_order bit DEFAULT NULL, 
+	on_order boolean DEFAULT FALSE, 
 	/*
 	If the item is on order or not, equivalent of boolean.
 	*/
@@ -67,7 +67,7 @@ Stores when all items stored in the inventory table are used.
 DROP TABLE IF EXISTS historical_usage;
 
 CREATE TABLE historical_usage (
-	datetime_used datetime NOT NULL,
+	date_used datetime NOT NULL,
 	/*
 	When an item from inventory is used.
 	*/
@@ -79,7 +79,7 @@ CREATE TABLE historical_usage (
 	/*
 	The number of the item used.
 	*/
-	PRIMARY KEY (datetime_used, item_id), 
+	PRIMARY KEY (date_used, item_id), 
 	/*
 	Composite key of the item used and when it was used.
 	*/
@@ -106,6 +106,8 @@ CREATE TABLE vendors (
 	vendor_address varchar(255) DEFAULT NULL, 
 	/*
 	Address of where the vendor is located.
+	If I was actually implementing this database, I would split vendor_address up to have a vendor_city, vendor_zipcode, and
+	a state_id, which would connect to a US_States table.
 	*/
 	PRIMARY KEY (vendor_id)
 );
@@ -137,7 +139,7 @@ CREATE TABLE vendor_prices (
 	I do not believe would occur with this project as I saw it happening when people were doing money*money 
 	or money/money, which doesnt make sense why you would even perform those operations in the first place.
 	The smallmoney datatype might actually be too small for some of the medical supplies purchased (although probably not for a single item).
-	Just to be safe and in part for space savings I went with decimal and made it slightly larger than smallmoney (can go up to $9,999,999.999).
+	Just to be safe and in part for space savings I went with decimal and made it slightly larger than smallmoney (can go up to $9,999,999.9999).
 	*/
 	PRIMARY KEY (item_id, vendor_id), 
 	/*
@@ -150,8 +152,11 @@ CREATE TABLE vendor_prices (
 
 /*
 Creates the users table.
+Used to determine permissions when using this database.
 Right now only to be used for the personnel that can reorder supplies.
 Used with orders table to track who placed an order.
+There will be a blank user_name and password for guests.
+I could have another table 
 */
 DROP TABLE IF EXISTS users;
 
@@ -167,6 +172,18 @@ CREATE TABLE users (
 	The format will be the first initial followed by up to the first 9 letters of the last name, all caps.
 	Example: My user_name would be BNICHOLS.
 	*/
+	password varchar(20) NOT NULL,
+	/*
+	The password for the username.
+	*/
+	permissions int(1) DEFAULT 0,
+	/*
+	I could create two more tables, one of admin rights, specifying the level (as the primary key) with another column saying what that particular value provides.
+	Then there would be another table for user_permissions which would have the user_id and admin_rights.
+	This would allow the ability to do fine granularity in what each user will have access to.
+	As this is a very simple project, I am only doing tiered permissions, where the higher the number, the more permissions they have.
+	Admin user will have 5, guest will have 0, other users right now have 3.  This gives expansion room if I decide later to add more levels in between at a later time.
+	*/
 	PRIMARY KEY (user_id)
 );
 
@@ -180,7 +197,7 @@ New orders will be made through another system, which will generate a .csv file 
 DROP TABLE IF EXISTS orders;
 
 CREATE TABLE orders (
-	order_id int(13) NOT NULL,
+	order_id varchar(14) NOT NULL,
 	/*
 	Primary key of the orders table.
 	Order number (order_id) will be provided by the .csv file.
@@ -215,7 +232,7 @@ A line item is uniquely defined based off of the order_id and item_id.
 DROP TABLE IF EXISTS order_line_items;
 
 CREATE TABLE order_line_items (
-	order_id int(13) NOT NULL,
+	order_id varchar(14) NOT NULL,
 	/*
 	Foreign key from the orders table.
 	The overall order of which this line item belongs to.
