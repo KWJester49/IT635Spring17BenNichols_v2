@@ -37,14 +37,12 @@ class InventoryAccess
 		$db_password = $this->db->real_escape_string($password);
 
 		$query = "select * from users where user_name = '$db_username';";
-		echo $query.PHP_EOL;
-		$result = $this->db->query($query);
+		$result= $this->db->query($query);
 		while ($row = $result->fetch_assoc())
 		{
 			if ($row["password"] == $db_password)
 			{
 				$this->permission = $row["permissions"];
-				echo $this->permission.PHP_EOL;
 				return true;
 			}
 		}
@@ -96,6 +94,13 @@ class InventoryAccess
 		if(!$permission=$this->permissions(self::USER, "upload an order"))
 			return $permission;
 		echo "Can execute".PHP_EOL;
+
+		if(($file=fopen($filename, "r")) !== FALSE)
+		{
+			while($data= fgetcsv($file, ))
+
+			fclose($file);
+		}
 
 	}
 
@@ -223,6 +228,29 @@ class InventoryAccess
 		return true;
 	}
 
+	/*
+	This function will remove an item from inventory if it is no longer carried
+	*/
+	public function deleteItemFromInventory($item_id)
+	{
+		//Make sure user has the permissions to remove an item from inventory.
+		if(!$permission=$this->permissions(self::USER, "remove item from inventory"))
+			return $permission;
+
+		$query= "SELECT quantity FROM inventory WHERE item_id=$item_id;";
+		$result= $this->db->query($query);
+		$row=$result->fetch_assoc();
+		if($row["quantity"]>0)
+		{
+			echo "Can't remove $item_id from inventory because it is still in stock.".PHP_EOL;
+			return false;
+		}
+
+		$sql= "DELETE FROM inventory WHERE item_id=$item_id;";
+		$this->db->query($sql);
+
+	}
+
 
 	/*
 	Runs a report of items on inventory
@@ -299,8 +327,138 @@ class InventoryAccess
 		}
 	}
 
+	/*
+	Gets the database's recommended par levels.  
+	One of the problems with the storeroom is excessive stock.  
+	With the quick and guaranteed delivery time of most items (overnight for over 80% of items), 
+	the plan is to only keep on hand double the par level.
+	The par level should be enough that when supplies are reordered, they will be close to running out (but not actually run out, so buffer is added in).
+	With this system, most supplies will be ordered multiple times per week, but in low quantities so the storeroom has what it needs and only that.
+	Par level should be calculated as average time that it takes for an order to arrive for that line item, multiplied by the burn rate of that item.
+	Buffer should be double the average delivery time (should be very short).
+	*/
+	public function reportRecommendedParLevels()
+	{
+		//Reports of recommended par levels for items.  Only 
+		if(!$permission=$this->permissions(self::USER, "run a Recommended Par Level Report"))
+			return $permission;
+
+		$query="SELECT historical_usage.item_id, items.item_name, MIN(historical_usage.date_used), MAX(historical_usage.date_used), SUM(historical_usage.quantity)
+			FROM historical_usage, items
+			WHERE items.item_id=historical_usage.item_id 
+			Group By historical_usage.item_id;";
+		$result= $this->db->query($query);
+		echo "query RUN".PHP_EOL.PHP_EOL;
+		while($row= $result->fetch_row())
+		{
+			$item_id=$row[0];
+			$item_name=$row[1];
+
+			$old_date= new DateTime($row[2]);
+			$new_date= new DateTime($row[3]);
+			$diff= $old_date->diff($new_date);
+			$ave_use=$row[4]/($diff->days); //average number of item used per day (BURN RATE)
+			
+			//Get the average time it takes for an order to be delivered for this item
+			$query2= "SELECT AVG(datediff(order_line_items.date_received, orders.date_ordered)) 
+				FROM orders, order_line_items 
+				WHERE order_line_items.order_id=orders.order_id
+				AND order_line_items.item_id=$item_id;";
+			$result2= $this->db->query($query2);
+			$row2=$result2->fetch_row();
+
+			$par_level=2*$ave_use*$row2[0];//double the order time * burn rate
+			
+			echo "Item ID: $item_id\nItem Name: $row[1]\n\n\n\n$ave_use\n$row2[0]\n\nPar Level: $par_level".PHP_EOL;
+
+		}
+
+		return true;
+	}
+
+	/*
+	Delete an item from the items table (only available to admin)
+	*/
+	public function ADMIN_deleteItem($item_id)
+	{
+		//Check if admin rights to delete an item from items table
+		if(!$permission=$this->permissions(self::ADMIN, "delete an Item"))
+			return $permission;
+
+		$sql= "DELETE FROM items WHERE item_id=$item_id;";
+		if(!$this->db->query($sql) || $this->db->affected_rows==0)
+		{
+			echo "Error deleting $item_id from the DB.".PHP_EOL;
+			return false;
+		}
+		return true;
+	}
+
+	/*
+	Delete an order from the orders database (only available to admin)
+	*/
+	public function ADMIN_deleteOrder($order_id)
+	{
+		//Check if admin rights to delete an order
+		if(!$permission=$this->permissions(self::ADMIN, "delete an Order"))
+			return $permission;
+
+		//delete from order_line_items first, because its a child table of orders
+		$sql= "DELETE FROM order_line_items WHERE order_id='$order_id';";
+		if(!$this->db->query($sql))
+		{
+			echo "Error deleting $order_id from the order_line_items table.".PHP_EOL;
+			return false;
+		}
+
+		//delete from orders table
+		$sql= "DELETE FROM orders WHERE order_id='$order_id';";
+		if(!$this->db->query($sql))
+		{
+			echo "Error deleting $order_id from the orders table.".PHP_EOL;
+			return false;
+		}	
+		return true;
+	}
+
+	/*
+	Delete a vendor from the vendors table (and vendor_prices table)
+	*/
+	public function ADMIN_deleteVendor($vendor_id)
+	{
+		//Check if admin rights to delete a vendor
+		if(!$permission=$this->permissions(self::ADMIN, "delete a Vendor"))
+			return $permission;
+
+		//orders table references vendors table, don't delete information if something references it
+		$query="SELECT * FROM orders WHERE vendor_id=$vendor_id;";
+		$this->db->query($query);
+		if($this->db->affected_rows>0)
+		{
+			echo "Cannot delete vendor $vendor_id while there are orders for them.".PHP_EOL;
+			return false;
+		}
+
+
+		//delete from vendor_prices first, because its a child table of vendors
+		$sql= "DELETE FROM vendor_prices WHERE vendor_id=$vendor_id;";
+		if(!$this->db->query($sql))
+		{
+			echo "Error deleting $vendor_id from the vendor_prices table.".PHP_EOL;
+			return false;
+		}
+
+		//delete from vendors table
+		$sql= "DELETE FROM vendors WHERE vendor_id=$vendor_id;";
+		if(!$this->db->query($sql))
+		{
+			echo "Error deleting $vendor_id from the vendors table.".PHP_EOL;
+			return false;
+		}	
+		return true;
+	}
+
 
 }
-
 
 ?>

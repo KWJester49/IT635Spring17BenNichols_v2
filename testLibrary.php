@@ -14,4 +14,11 @@ $testDB->useItem(6515000002157,12);
 $testDB->updateParLevel(6515000002157, 40);
 $testDB->updateParLevel(6515000002157, 80);
 $testDB->reportItemsBelowParLevel();
+$testDB->reportRecommendedParLevels();
+$testDB->databaseLogin("ADMIN","12345");
+$testDB->ADMIN_deleteItem(6515000002266);
+$testDB->ADMIN_deleteOrder("N0018370560460");
+$testDB->ADMIN_deleteVendor(1);
+$testDB->useItem(6515000002271,7);
+$testDB->deleteItemFromInventory(6515000002271);
 ?>
