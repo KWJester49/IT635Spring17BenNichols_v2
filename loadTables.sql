@@ -40,7 +40,7 @@ INTO TABLE orders
 	FIELDS TERMINATED BY ','
 		OPTIONALLY ENCLOSED BY '"'
 	LINES TERMINATED BY '\n'
-(order_id, vendor_id, date_ordered, user_id);
+(order_id, vendor_id, date_ordered);
 
 LOAD DATA LOCAL INFILE 'csvFiles/order_line_items.csv'
 INTO TABLE order_line_items 

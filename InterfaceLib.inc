@@ -87,6 +87,7 @@ class InventoryAccess
 	Takes .csv file output from ordering system and uploads into the database.
 	Will insert into the orders and order_line_items tables (and into the inventory table if it does not exist there).
 	Will mark items as on order in the inventory table.
+	Order of .csv file is order_id, vendor_name, date_ordered, item_id, and quantity
 	*/
 	public function uploadOrder($filename)
 	{
@@ -95,9 +96,44 @@ class InventoryAccess
 			return $permission;
 		echo "Can execute".PHP_EOL;
 
-		if(($file=fopen($filename, "r")) !== FALSE)
+		/*
+		Should really take the outputs and put them into a temporary file, then load that, so you can see what the output is befoer loading or in case of problems.
+		*/
+		if($file_input=fopen($filename, "r"))
 		{
-			while($data= fgetcsv($file, ))
+			$comp_order_id= NULL;
+			$vendor_id= NULL;
+			while($data= fgetcsv($file_input))
+			{
+				$order_id= $data[0];
+
+				//if its a new order_id, insert data into orders table
+				if($comp_order_id != $order_id)
+				{
+					$comp_order_id= $order_id;
+					$vendor_name= $data[1];
+					$query= "SELECT vendor_id FROM vendors WHERE vendor_name = '$vendor_name';";
+					$result= $this->db->query($query);
+					$row= $result->fetch_assoc();
+					$vendor_id= $row["vendor_id"];
+					$date_ordered= $data[2];
+
+					$sql= "INSERT INTO orders (order_id, vendor_id, date_ordered) VALUES ('$order_id', $vendor_id, '$date_ordered');";
+					$this->db->query($sql);
+				}
+				
+				$item_id= $data[3];
+				$quantity= $data[4];
+				
+				$query= "SELECT price FROM vendor_prices WHERE vendor_id=$vendor_id AND item_id=$item_id;";
+				$result= $this->db->query($query);
+				$row= $result->fetch_assoc();
+				$unit_price= $row["price"];
+
+				$sql= "INSERT INTO order_line_items (order_id, item_id, quantity, unit_price) VALUES ('$order_id', $item_id, $quantity, $unit_price);";
+				$this->db->query($sql);
+
+			}
 
 			fclose($file);
 		}

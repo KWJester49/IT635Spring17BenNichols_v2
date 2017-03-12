@@ -153,10 +153,7 @@ CREATE TABLE vendor_prices (
 /*
 Creates the users table.
 Used to determine permissions when using this database.
-Right now only to be used for the personnel that can reorder supplies.
-Used with orders table to track who placed an order.
 There will be a blank user_name and password for guests.
-I could have another table 
 */
 DROP TABLE IF EXISTS users;
 
@@ -207,18 +204,12 @@ CREATE TABLE orders (
 	Foreign key from the vendors table.
 	Who the order is being purchased from.
 	*/
-	user_id int(4) DEFAULT NULL,
-	/*
-	Foreign key from the users table.
-	Who placed the order.
-	*/
 	date_ordered date NOT NULL,
 	/*
 	The date that the order is placed on.
 	*/
 	PRIMARY KEY (order_id),
-	FOREIGN KEY (vendor_id) REFERENCES vendors(vendor_id),
-	FOREIGN KEY (user_id) REFERENCES users(user_id)
+	FOREIGN KEY (vendor_id) REFERENCES vendors(vendor_id)
 );
 
 /*

@@ -21,4 +21,10 @@ $testDB->ADMIN_deleteOrder("N0018370560460");
 $testDB->ADMIN_deleteVendor(1);
 $testDB->useItem(6515000002271,7);
 $testDB->deleteItemFromInventory(6515000002271);
+
+$test=2;
+echo $test.PHP_EOL;
+if($test!=($test=5))
+	echo "operation works".PHP_EOL;
+echo $test.PHP_EOL;
 ?>
