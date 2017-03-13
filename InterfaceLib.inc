@@ -132,10 +132,9 @@ class InventoryAccess
 
 				$sql= "INSERT INTO order_line_items (order_id, item_id, quantity, unit_price) VALUES ('$order_id', $item_id, $quantity, $unit_price);";
 				$this->db->query($sql);
-
 			}
 
-			fclose($file);
+			fclose($file_input);
 		}
 
 	}
