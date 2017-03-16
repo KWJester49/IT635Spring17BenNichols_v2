@@ -169,7 +169,7 @@ CREATE TABLE users (
 	The format will be the first initial followed by up to the first 9 letters of the last name, all caps.
 	Example: My user_name would be BNICHOLS.
 	*/
-	password varchar(20) NOT NULL,
+	password varchar(20) DEFAULT NULL,
 	/*
 	The password for the username.
 	*/

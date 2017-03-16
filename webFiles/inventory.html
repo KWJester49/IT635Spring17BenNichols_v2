@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+</head>
+<body>
+
+
+<p> inventory </p>
+
+
+</body>
+</html>
+
+<!--Cookie stuff from index.html, debugging index atm.
+session_start();
+require_once('InterfaceLib.inc');
+
+function createGuestCookie()
+{
+	setcookie('username', 'Guest', time()+60*60*24);
+	setcookie('password', NULL, time()+60*60*24);
+}
+
+
+
+if(isset($_COOKIE['username']) && isset($_COOKIE['password']))
+{
+	
+	if($_SESSION['db']->databaseLogin($_COOKIE['username'], $_COOKIE['password']))
+	{
+		setcookie('username', $_COOKIE['username'], time()+60*60*24);
+		setcookie('password', $_COOKIE['password'], time()+60*60*24);
+	}
+	else
+	{
+		createGuestCookie();
+	}
+}
+else
+{
+	createGuestCookie();
+}-->

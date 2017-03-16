@@ -1,0 +1,160 @@
+<?php
+session_start();
+require_once('InterfaceLib.inc');
+
+function createGuestCookie()
+{
+	setcookie('username', 'Guest', time()+60*60*24);
+	setcookie('password', NULL, time()+60*60*24);
+}
+
+$_SESSION['db']= new InventoryAccess();
+
+
+if(isset($_COOKIE['username']) && isset($_COOKIE['password']))
+{
+	
+	if($_SESSION['db']->databaseLogin($_COOKIE['username'], $_COOKIE['password']))
+	{
+		setcookie('username', $_COOKIE['username'], time()+60*60*24);
+		setcookie('password', $_COOKIE['password'], time()+60*60*24);
+	}
+	else
+	{
+		createGuestCookie();
+	}
+}
+else
+{
+	createGuestCookie();
+}
+?>
+
+<html lang="en">
+<head>
+	<title>Main OR Storeroom</title>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" href="webFiles/css/bootstrap.min.css">
+	<link rel="stylesheet" href="webFiles/css/login.css">
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+	<script src="webFiles/js/bootstrap.min.js"></script>
+	
+	<!-- Script to change content of page   -->
+	<script type="text/javascript">
+		function getInventoryPage()
+		{
+			document.getElementById("content").src = "webFiles/inventory.html";
+		}
+
+		function getOrdersPage()
+		{
+			document.getElementById("content").src = "webFiles/orders.html"
+		}
+
+		function getReportsPage()
+		{
+			document.getElementById("content").src = "webFiles/reports.html"
+		}
+
+		function getAdminPage()
+		{
+			document.getElementById("content").src = "webFiles/admin.html"
+		}
+	</script>
+
+	
+</head>
+<body>
+
+<!-- Login to database portion -->
+<div class = "container">
+	<p class="text-right">
+		<?php 
+			if(isset($_COOKIE['username']))	
+			{
+		?>
+		<span><?php echo $_COOKIE['username']; ?></span>
+		<a onclick="document.getElementById('loginWindow').style.display='block'" class="text-primary">(Change Login)</a>		
+		<?php
+			}
+			else 
+			{
+		?>
+		<a onclick="document.getElementById('loginWindow').style.display='block'">Login</a>
+		<?php
+			}
+		?>
+		<div id="loginWindow" class="logWindow">
+			<form class="logContent" action="" style="padding: 16px;">
+				<div class="form-group">
+					<label for="username">Username</label>
+					<input type="text" placeholder="Enter Username" class="form-control" id="username">
+				</div>
+				<div class="form-group">
+					<label for="password">Password</label>
+					<input type="password" placeholder="Enter Password" class="form-control" id="password">
+				</div>
+				<div class="row">
+					<div class="col-md-6">
+						<button type="submit" class="btn btn-primary" >Login</button>
+					</div>
+					<div class="col-md-6">
+						<button type="button" class="btn btn-primary center-block" onclick="document.getElementById('loginWindow').style.display='none'">Cancel</button>
+					</div>
+				</div>
+			</form>
+		</div>
+	</p>
+</div>
+
+<!-- Script to close login box when click outside of it.-->
+<script type="text/javascript">
+	var loginWindow= document.getElementById('loginWindow');
+
+	window.onclick= function(event) 
+	{
+		if(event.target == loginWindow)
+		{
+			loginWindow.style.display= "none";
+		}
+	}
+
+</script>
+<!-- End login portion of code -->
+
+<div class="text-center">
+	<h1>Main Operating Room Inventory</h1>
+</div>
+
+<!-- Header line with options for the changing content -->
+<div class= "container">
+	<h3>
+		<div class="row">
+			<div class="col-sm-3">
+				<a href="javascript:getInventoryPage();">Inventory</a>
+			</div>
+			<div class="col-sm-3">
+				<a href="javascript:getOrdersPage();">Orders</a>
+			</div>
+			<div class="col-sm-3">
+				<a href="javascript:getReportsPage();">Reports</a>
+			</div>
+			<div class="col-sm-3">
+				<a href="javascript:getAdminPage();">Admin Functions</a>
+			</div>
+		</div>
+	</h3>
+</div>
+<!-- End header line with options for the changing content -->
+
+<!-- Content of web page, determined by header line links -->
+<iframe id="content" src="webFiles/reports.html" style="border:none;"></iframe>
+<!-- End content of web page, determined by header line links -->
+
+
+
+
+
+</body>
+</html>
