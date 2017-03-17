@@ -188,6 +188,29 @@ class InventoryAccess
 		return true;
 	}
 
+	/*
+	Gets a list of receivable order (order_id & item_id combinations)
+	*/
+	public function getReceivableOrders()
+	{
+		//Make sure user has the permissions to receive an order.
+		if(!$permission=$this->permissions(self::USER, "receive an order"))
+			return $permission;
+
+		$query= "SELECT order_id, item_id FROM order_line_items	WHERE date_received IS NULL;";
+		$result= $this->db->query($query);
+
+		$html= "";
+		while($row=$result->fetch_assoc())
+		{
+			$order_id= $row['order_id'];
+			$item_id= $row['item_id'];
+			$combinedValue= $order_id.$item_id;
+			$html .= "<div class='checkbox'><label><input type='checkbox' name='receivableOrder[]' value=$combinedValue>$order_id  $item_id</label></div>";
+		}
+		echo $html;
+	}
+
 
 	/*
 	This function is used to mark that an item has been used.  
@@ -331,12 +354,34 @@ class InventoryAccess
 		AND order_line_items.item_id=items.item_id 
 		AND orders.vendor_id=vendors.vendor_id";
 		$result = $this->db->query($query);
-		$counter=1;
-		while ($row = $result->fetch_assoc())
+		$html= "<div class='container'><div class='row'><div class='col-md-12'>
+				<table class='table table-bordered table-striped table-condensed table-responsive'>
+					<thead>
+						<tr>
+							<th>Order Number</th>
+							<th>NSN</th>
+							<th>Item Name</th>
+							<th>Quantity</th>
+							<th>Unit Price</th>
+							<th>Vendor Name</th>
+							<th>Date Ordered</th>
+							<th>Date Received</th>
+						</tr>
+					</thead>
+				<tbody>";
+		while ($row = $result->fetch_row())
 		{
-			echo "There is row $counter".PHP_EOL;
-			$counter++;
+			$html .= "<tr>";
+			for($i=0; $i<sizeof($row); $i++)
+			{
+				$html .= "<td> $row[$i] </td>";
+			}
+			$html .= "</tr>";
 		}
+		$html .= "	</tbody>
+				</table>
+				</div></div></div>";
+		echo $html;
 	}
 
 	/*

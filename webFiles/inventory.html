@@ -1,43 +1,24 @@
 <!DOCTYPE html>
 <html>
 <head>
-
+	<title>Inventory Page</title>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" href="css/bootstrap.min.css">
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+	<script src="js/bootstrap.min.js"></script>
 </head>
 <body>
 
 
 <p> inventory </p>
 
-
-</body>
-</html>
-
-<!--Cookie stuff from index.html, debugging index atm.
+<?php
 session_start();
 require_once('InterfaceLib.inc');
 
-function createGuestCookie()
-{
-	setcookie('username', 'Guest', time()+60*60*24);
-	setcookie('password', NULL, time()+60*60*24);
-}
+?>
 
 
-
-if(isset($_COOKIE['username']) && isset($_COOKIE['password']))
-{
-	
-	if($_SESSION['db']->databaseLogin($_COOKIE['username'], $_COOKIE['password']))
-	{
-		setcookie('username', $_COOKIE['username'], time()+60*60*24);
-		setcookie('password', $_COOKIE['password'], time()+60*60*24);
-	}
-	else
-	{
-		createGuestCookie();
-	}
-}
-else
-{
-	createGuestCookie();
-}-->
+</body>
+</html>

@@ -1,5 +1,5 @@
 <?php
-require_once('InterfaceLib.inc');
+require_once('../InterfaceLib.inc');
 
 function createGuestCookie()
 {
@@ -64,65 +64,61 @@ else
 
 	
 </head>
-<body>
+<body >
+
 
 <!-- Login to database portion -->
-<div class = "container">
-	<p class="text-right">
-		<?php 
-			if(isset($_COOKIE['username']))	
-			{
-		?>
-		<span><?php echo $_COOKIE['username']; ?></span>
-		<a onclick="document.getElementById('loginWindow').style.display='block'" class="text-primary">(Change Login)</a>		
-		<?php
-			}
-			else 
-			{
-		?>
-		<a onclick="document.getElementById('loginWindow').style.display='block'" class="text-primary">Login</a>
-		<?php
-			}
-		?>
-		<div id="loginWindow" class="logWindow">
-			<form class="logContent" action="login.php" method="post" style="padding: 16px;">
-				<div class="form-group">
-					<label for="username">Username</label>
-					<input type="text" placeholder="Enter Username" class="form-control" id="username" name="username">
-				</div>
-				<div class="form-group">
-					<label for="password">Password</label>
-					<input type="password" placeholder="Enter Password" class="form-control" id="password" name="password">
-				</div>
-				<div class="row">
-					<div class="col-md-3"></div>
-					<div class="col-md-1">
-						<button type="submit" class="btn btn-primary" >Login</button>
-					</div>
-					<div class="col-md-3"></div>
-					<div class="col-md-1">
-						<button type="button" class="btn btn-primary" onclick="document.getElementById('loginWindow').style.display='none'">Cancel</button>
-					</div>
-					<div class="col-md-4"></div>
-				</div>
-			</form>
-		</div>
-	</p>
-</div>
-
-<!-- Script to close login box when click outside of it.-->
-<script type="text/javascript">
-	var loginWindow= document.getElementById('loginWindow');
-
-	window.onclick= function(event) 
-	{
-		if(event.target == loginWindow)
+<p class="text-right">
+	<?php 
+		if(isset($_COOKIE['username']))	
 		{
-			loginWindow.style.display= "none";
+	?>
+	<span><?php echo $_COOKIE['username']; ?></span>
+	<button type="button" class="btn btn-link" data-toggle="modal" data-target="#loginWindow">(Change Login)</button>		
+	<?php
 		}
-	}
+		else 
+		{
+	?>
+	<button type="button" class="btn btn-link" data-toggle="modal" data-target="#loginWindow">Login</button>
+	<?php
+		}
+	?>
 
-</script>
+	<!--Login modal -->
+	<div id="loginWindow" class="modal fade" role="dialog">
+		<div class="modal-dialog">
+			
+			<!--Login modal content -->
+			<div class="modal-content">
+				
+				<div class="modal-header">
+					<h4 class="modal-title">
+						Login
+					</h4>
+					<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+				</div>
+
+				<div class="modal-body">
+					<form id="loginForm" action="login.php" method="post" role="form" style="padding: 16px;">
+						<div class="form-group">
+							<label for="username">Username</label>
+							<input type="text" placeholder="Enter Username" class="form-control" id="username" name="username">
+						</div>
+						<div class="form-group">
+							<label for="password">Password</label>
+							<input type="password" placeholder="Enter Password" class="form-control" id="password" name="password">
+						</div>
+							<button type="submit" class="btn btn-primary">Login</button>
+							<button type="button" class="btn btn-primary" data-dismiss="modal">Cancel</button>
+					</form>
+				</div>
+
+			</div>
+
+		</div>	
+	</div>
+</p>
 <!-- End login portion of code -->
 
 <div class="text-center">
@@ -152,10 +148,11 @@ else
 <!-- End header line with options for the changing content -->
 
 <!-- Content of web page, determined by header line links -->
-<iframe id="content" src="webFiles/reports.html" class="dbIFrame"></iframe>
+<div class="dbIFrameWindow">
+	<iframe id="content" src="reports.html" class="dbIFrame">
+	</iframe>
+</div>
 <!-- End content of web page, determined by header line links -->
-
-
 
 
 

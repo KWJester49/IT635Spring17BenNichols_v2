@@ -1,4 +1,4 @@
-.logWindow {
+.popUpWindow {
 	display: none;
 	position: fixed;
 	z-index: 1;
@@ -12,9 +12,23 @@
 	padding-top: 60px;
 }
 
-.logContent {
+.popUpContent {
 	background-color:#fefefe;
 	margin:5% auto 15% auto;
 	border: 1px solid #888;
-	width: 80%;
+	width: 30%;
+}
+
+.dbIFrameWindow {
+	
+}
+
+.dbIFrame {
+	overflow: scroll;
+	overflow-x: scroll;
+	overflow-y: scroll;
+	border:none;
+	position:absolute; 
+	width: 100%;
+	height: 100%;
 }
