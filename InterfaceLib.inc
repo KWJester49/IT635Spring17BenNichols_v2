@@ -450,17 +450,33 @@ class InventoryAccess
 			return $permission;
 		
 		
-		$query="SELECT * FROM inventory, items WHERE inventory.item_id=items.item_id AND inventory.quantity<=inventory.par_level;";
+		$query="SELECT inventory.item_id, items.item_name, inventory.quantity, inventory.par_level FROM inventory, items WHERE inventory.item_id=items.item_id AND inventory.quantity<=inventory.par_level;";
 		$result = $this->db->query($query);
+		$html= "<div class='container'><div class='row'><div class='col-md-12'>
+				<table class='table table-bordered table-striped table-condensed table-responsive' style='margin: auto; width:50%;'>
+					<thead>
+						<tr>
+							<th>NSN</th>
+							<th>Item Name</th>
+							<th>Quantity</th>
+							<th>Par Level</th>
+						</tr>
+					</thead>
+					<tbody>";
 		while ($row = $result->fetch_row())
 		{
 			
+			$html .= "<tr>";
 			for($i=0; $i<sizeof($row); $i++)
 			{
-				echo $row[$i].PHP_EOL;
+				$html .= "<td> $row[$i] </td>";
 			}
-			echo PHP_EOL.PHP_EOL;
+			$html .= "</tr>";
 		}
+		$html .= "	</tbody>
+				</table>
+				</div></div></div>";
+		echo $html;
 	}
 
 	/*
@@ -475,8 +491,8 @@ class InventoryAccess
 	*/
 	public function reportRecommendedParLevels()
 	{
-		//Reports of recommended par levels for items.  Only 
-		if(!$permission=$this->permissions(self::USER, "run a Recommended Par Level Report"))
+		//Reports of recommended par levels for items.   
+		if(!$permission=$this->permissions(self::GUEST, "run a Recommended Par Level Report"))
 			return $permission;
 
 		$query="SELECT historical_usage.item_id, items.item_name, MIN(historical_usage.date_used), MAX(historical_usage.date_used), SUM(historical_usage.quantity)
@@ -484,7 +500,16 @@ class InventoryAccess
 			WHERE items.item_id=historical_usage.item_id 
 			Group By historical_usage.item_id;";
 		$result= $this->db->query($query);
-		echo "query RUN".PHP_EOL.PHP_EOL;
+		$html= "<div class='container'><div class='row'><div class='col-md-12'>
+				<table class='table table-bordered table-striped table-condensed table-responsive' style='margin: auto; width:50%;'>
+					<thead>
+						<tr>
+							<th>NSN</th>
+							<th>Item Name</th>
+							<th>Recommended Par Level</th>
+						</tr>
+					</thead>
+					<tbody>";
 		while($row= $result->fetch_row())
 		{
 			$item_id=$row[0];
@@ -504,12 +529,57 @@ class InventoryAccess
 			$row2=$result2->fetch_row();
 
 			$par_level=2*$ave_use*$row2[0];//double the order time * burn rate
-			
-			echo "Item ID: $item_id\nItem Name: $row[1]\n\n\n\n$ave_use\n$row2[0]\n\nPar Level: $par_level".PHP_EOL;
-
+			$html .= "<tr>
+						<td> $item_id </td>
+						<td> $item_name </td>
+						<td> $par_level </td>
+					</tr>";
 		}
+		$html .= "	</tbody>
+				</table>
+				</div></div></div>";
+		echo $html;
+	}
 
-		return true;
+	/*
+	Get the historical usage of items in the database.
+	*/
+	public function reportHistoricalUsage()
+	{
+		//Reports of historical usage of items.   
+		if(!$permission=$this->permissions(self::GUEST, "run a Historical Usage of Items Report"))
+			return $permission;
+
+		$query="SELECT historical_usage.date_used, historical_usage.item_id, items.item_name, historical_usage.quantity
+			FROM historical_usage, items
+			WHERE items.item_id=historical_usage.item_id 
+			ORDER BY historical_usage.date_used DESC;";
+		$result= $this->db->query($query);
+		$html= "<div class='container'><div class='row'><div class='col-md-12'>
+				<table class='table table-bordered table-striped table-condensed table-responsive' style='margin: auto; width:50%;'>
+					<thead>
+						<tr>
+							<th>Date Used</th>
+							<th>NSN</th>
+							<th>Item Name</th>
+							<th>Quantity Used</th>
+						</tr>
+					</thead>
+					<tbody>";
+		while ($row = $result->fetch_row())
+		{
+			
+			$html .= "<tr>";
+			for($i=0; $i<sizeof($row); $i++)
+			{
+				$html .= "<td> $row[$i] </td>";
+			}
+			$html .= "</tr>";
+		}
+		$html .= "	</tbody>
+				</table>
+				</div></div></div>";
+		echo $html;
 	}
 
 	/*
