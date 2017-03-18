@@ -48,17 +48,29 @@ else
 
 		function getOrdersPage()
 		{
-			document.getElementById("content").src = "orders.html"
+			document.getElementById("content").src = "orders.html";
 		}
 
-		function getReportsPage()
+		function getReportsPage(x)
 		{
-			document.getElementById("content").src = "reports.html"
+			var report= String(x);
+			switch(report)
+			{
+				case "itemsBelowPar":
+					document.getElementById("content").src = "reports.html";
+					break;
+				case "recommendedPar":
+
+					break;
+				case "historicalUsage":
+
+					break;
+			}
 		}
 
 		function getAdminPage()
 		{
-			document.getElementById("content").src = "admin.html"
+			document.getElementById("content").src = "admin.html";
 		}
 	</script>
 
@@ -67,7 +79,7 @@ else
 <body >
 
 
-<!-- Login to database portion -->
+<!-- Login to database modal -->
 <p class="text-right">
 	<?php 
 		if(isset($_COOKIE['username']))	
@@ -130,16 +142,23 @@ else
 	<h3>
 		<div class="row">
 			<div class="col-sm-3">
-				<a href="javascript:getInventoryPage();">Inventory</a>
+				<button class="btn btn-link" onclick="getInventoryPage();" style="font-size: 30px;">Inventory</button>
 			</div>
 			<div class="col-sm-3">
-				<a href="javascript:getOrdersPage();">Orders</a>
+				<button class="btn btn-link" onclick="getOrdersPage();" style="font-size: 30px;">Orders</button>
 			</div>
 			<div class="col-sm-3">
-				<a href="javascript:getReportsPage();">Reports</a>
+				<div class="dropdown">
+					<button class="btn btn-link dropbtn" style="font-size: 30px;">Reports</button>
+					<div class="dropdown-content">
+						<a href="javascript:getReportsPage('itemsBelowPar');" id="itemsBelowPar">Items Below Par Level</a>
+						<a href="javascript:getReportsPage('recommendedPar');" id="recommendedPar">Recommended Par Levels</a>
+						<a href="javascript:getReportsPage('historicalUsage');" id="historicalUsage">Historical Item Usage</a>
+					</div>
+				</div>
 			</div>
 			<div class="col-sm-3">
-				<a href="javascript:getAdminPage();">Admin Functions</a>
+				<button class="btn btn-link" onclick="getAdminPage();" style="font-size: 30px;">Admin Functions</button>
 			</div>
 		</div>
 	</h3>

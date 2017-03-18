@@ -65,25 +65,7 @@ class InventoryAccess
 		}
 	}
 
-	/*
-	Add an item to the database.
-	Supply technicians (USER) should be able to add items smartly (be trained),
-	rather than only being an ADMIN role.
-	*/
-	public function addItem($item_id,$item_name,$item_desc)
-	{
-		//Check if user has permission to add an item
-		if(!$permission=$this->permissions(self::USER, "add an item"))
-			return $permission;
-		
-		$query="INSERT INTO items (item_id, item_name, item_desc) VALUES ('$item_id', '$item_name', '$item_desc');";
-		if(!$this->db->query($query))
-		{
-			echo "failed to add $item_id".PHP_EOL;
-		}
-	}
-
-	/*
+		/*
 	Takes .csv file output from ordering system and uploads into the database.
 	Will insert into the orders and order_line_items tables (and into the inventory table if it does not exist there).
 	Will mark items as on order in the inventory table.
@@ -97,7 +79,7 @@ class InventoryAccess
 		echo "Can execute".PHP_EOL;
 
 		/*
-		Should really take the outputs and put them into a temporary file, then load that, so you can see what the output is befoer loading or in case of problems.
+		Should really take the outputs and put them into a temporary file, then load that, so you can see what the output is before loading or in case of problems.
 		*/
 		if($file_input=fopen($filename, "r"))
 		{
@@ -200,13 +182,13 @@ class InventoryAccess
 		$query= "SELECT order_id, item_id FROM order_line_items	WHERE date_received IS NULL;";
 		$result= $this->db->query($query);
 
-		$html= "";
+		$html= "<h5>&ensp; Order Number &ensp;&nbsp; NSN</h5>";
 		while($row=$result->fetch_assoc())
 		{
 			$order_id= $row['order_id'];
 			$item_id= $row['item_id'];
 			$combinedValue= $order_id.$item_id;
-			$html .= "<div class='checkbox'><label><input type='checkbox' name='receivableOrder[]' value=$combinedValue>$order_id  $item_id</label></div>";
+			$html .= "<div class='checkbox'><label><input type='checkbox' name='receivableOrder[]' value=$combinedValue>$order_id &emsp; $item_id</label></div>";
 		}
 		echo $html;
 	}
@@ -256,6 +238,31 @@ class InventoryAccess
 	}
 
 	/*
+	Displays items and quantities so they can be selected to be used.
+	*/
+	public function getUsableItems()
+	{
+		//Make sure user has the permissions to use an item.
+		if(!$permission=$this->permissions(self::USER, "use an item"))
+			return $permission;
+
+		$query= "SELECT item_id FROM inventory;";
+		$result= $this->db->query($query);
+
+		$html= "<div class='form-group'>
+					<h5>NSN</h5>
+					<select class='form-control' name='usedItem'>
+						<option disabled selected value> Select an NSN </option>";
+		while($row=$result->fetch_assoc())
+		{
+			$item_id= $row['item_id'];
+			$html .= "<option value=$item_id>$item_id</option>";
+		}
+		$html .= "</select><h5>Quantity</h5><input type='number' name='quantity'></div>";
+		echo $html;
+	}
+
+	/*
 	This function is used to update the par level (low water mark) of an item in the inventory.
 	*/
 	public function updateParLevel($item_id, $par_level)
@@ -284,6 +291,31 @@ class InventoryAccess
 			return false;
 		}
 		return true;
+	}
+
+	/*
+	Get items from inventory table to be used to update par levels.
+	*/
+	public function getItemsParUpdate()
+	{
+		//Make sure user has the permissions to update the par level.
+		if(!$permission=$this->permissions(self::USER, "update the par level"))
+			return $permission;
+
+		$query= "SELECT item_id FROM inventory;";
+		$result= $this->db->query($query);
+
+		$html= "<div class='form-group'>
+					<h5>NSN</h5>
+					<select class='form-control' name='usedItem'>
+						<option disabled selected value> Select an NSN </option>";
+		while($row=$result->fetch_assoc())
+		{
+			$item_id= $row['item_id'];
+			$html .= "<option value=$item_id>$item_id</option>";
+		}
+		$html .= "</select><h5>Quantity</h5><input type='number' name='par_level'></div>";
+		echo $html;
 	}
 
 	/*
@@ -322,20 +354,44 @@ class InventoryAccess
 		$query= "SELECT inventory.item_id, items.item_name, items.item_desc, inventory.quantity, inventory.location, inventory.par_level, inventory.on_order
 			FROM inventory, items WHERE inventory.item_id=items.item_id;";
 		$result = $this->db->query($query);
-		echo "National Stock Number  |  Item Name  |  Item Description  |  Quantity  |  Location  |  Par Level  |  On Order".PHP_EOL;
-		while ($row = $result->fetch_assoc())
+		$html= "<div class='container'><div class='row'><div class='col-md'12'>
+				<table class='table table-bordered table-striped table-condensed table-responsive'>
+					<thead>
+						<tr>
+							<th>National Stock Number</th>
+							<th>Item Name</th>
+							<th>Item Description</th>
+							<th>Quantity</th>
+							<th>Location</th>
+							<th>Par Level</th>
+							<th>On Order</th>
+						</tr>
+					</thead>
+					<tbody>";
+		while ($row = $result->fetch_row())
 		{
-			$on_order=$row["on_order"];
-			if($on_order==1)
+			$html .= "<tr>";
+			for($i=0; $i<sizeof($row); $i++)
 			{
-				$on_order="Yes";
+				if($i==6)
+				{
+					if($row[$i]==1)
+					{
+						$row[$i]="Yes";
+					}
+					else
+					{
+						$row[$i]="No";
+					}
+				}
+				$html .= "<td> $row[$i] </td>";
 			}
-			else
-			{
-				$on_order="No";
-			}
-			echo $row["item_id"]." | ".$row["item_name"]." | ".$row["item_desc"]." | ".$row["quantity"]." | ".$row["location"]." | ".$row["par_level"]." | ".$on_order.PHP_EOL;
+			$html .= "</tr>";
 		}
+		$html .= "	</tbody>
+				</table>
+				</div></div></div>";
+		echo $html;
 	}
 
 	/*
@@ -368,7 +424,7 @@ class InventoryAccess
 							<th>Date Received</th>
 						</tr>
 					</thead>
-				<tbody>";
+					<tbody>";
 		while ($row = $result->fetch_row())
 		{
 			$html .= "<tr>";
@@ -454,6 +510,24 @@ class InventoryAccess
 		}
 
 		return true;
+	}
+
+	/*
+	Add an item to the database.
+	Supply technicians (USER) should be able to add items smartly (be trained),
+	rather than only being an ADMIN role.
+	*/
+	public function ADMIN_addItem($item_id,$item_name,$item_desc)
+	{
+		//Check if user has permission to add an item
+		if(!$permission=$this->permissions(self::ADMIN, "add an item"))
+			return $permission;
+		
+		$query="INSERT INTO items (item_id, item_name, item_desc) VALUES ('$item_id', '$item_name', '$item_desc');";
+		if(!$this->db->query($query))
+		{
+			echo "failed to add $item_id".PHP_EOL;
+		}
 	}
 
 	/*
