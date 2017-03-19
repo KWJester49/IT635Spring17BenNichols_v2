@@ -60,7 +60,7 @@ class InventoryAccess
 		}
 		else
 		{
-			echo "Do not have authorization to $task_error_msg.".PHP_EOL;
+			echo "<h3>Do not have authorization to $task_error_msg.</h3>";
 			return false;
 		}
 	}
@@ -598,6 +598,12 @@ class InventoryAccess
 		{
 			echo "failed to add $item_id".PHP_EOL;
 		}
+
+		$query="INSERT INTO inventory (item_id, quantity) VALUES ('$item_id', 0);";
+		if(!$this->db->query($query))
+		{
+			echo "failed to add $item_id to inventory".PHP_EOL;
+		}
 	}
 
 	/*
@@ -609,13 +615,123 @@ class InventoryAccess
 		if(!$permission=$this->permissions(self::ADMIN, "delete an Item"))
 			return $permission;
 
+		$sql= "DELETE FROM inventory WHERE item_id=$item_id;";
+		if(!$this->db->query($sql))
+		{
+			echo "Error deleting $item_id from the DB.".PHP_EOL;
+			return false;
+		}
+
 		$sql= "DELETE FROM items WHERE item_id=$item_id;";
-		if(!$this->db->query($sql) || $this->db->affected_rows==0)
+		if(!$this->db->query($sql))
 		{
 			echo "Error deleting $item_id from the DB.".PHP_EOL;
 			return false;
 		}
 		return true;
+	}
+
+	/*
+	Update the inventory quantity.  
+	Used for when a mistake was made in using or receiving an item, or for gains/loss by physical inventory.
+	*/
+	public function ADMIN_updateInventoryQuantity($item_id, $quantity)
+	{
+		//Check if admin rights to update the quantity in the inventory
+		if(!$permission=$this->permissions(self::ADMIN, "update inventory quantity"))
+			return $permission;
+
+		$sql= "UPDATE inventory SET quantity=$quantity WHERE item_id=$item_id;";
+
+		//Problem updating inventory's quantity
+		if(!$this->db->query($sql) || $this->db->affected_rows==0)
+		{
+			echo "problem with updating inventory's quantity".PHP_EOL;
+			return false;
+		}
+	}
+
+	/*
+	Get the item id for items in inventory, to be used with ADMIN update inventory quantity and update inventory information
+	*/
+	public function ADMIN_getUpdatableInventoryQuantity()
+	{
+		//Check if admin rights to update information in the inventory
+		if(!$permission=$this->permissions(self::ADMIN, "update inventory information"))
+			return $permission;
+
+		$query= "SELECT item_id, quantity FROM inventory;";
+		$result= $this->db->query($query);
+
+		$html= "<div class='form-group'><h5>NSN &emsp;&emsp;&emsp;&emsp; Current Quantity</h5>
+			<select class='form-control' name= 'item_id'>
+				<option disabled selected value> Select an NSN </option>";
+		while($row=$result->fetch_assoc())
+		{
+			$item_id= $row['item_id'];
+			$quantity= $row['quantity'];
+			$html .= "<option value= '$item_id'>$item_id &emsp; $quantity</option>";
+		}
+		$html .= "</select><h5>New Quantity</h5><input type='number' name='quantity'></div>";
+		echo $html;
+	}
+
+	/*
+	Update the inventory quantity.  
+	Used for when a mistake was made in using or receiving an item, or for gains/loss by physical inventory.
+	*/
+	public function ADMIN_updateInventoryInfo($item_id, $quantity, $location, $par_level, $on_order)
+	{
+		//Check if admin rights to update the quantity in the inventory
+		if(!$permission=$this->permissions(self::ADMIN, "update inventory information"))
+			return $permission;
+
+		$sql= "UPDATE inventory SET quantity=$quantity, location='$location', par_level=$par_level, on_order=$on_order WHERE item_id=$item_id;";
+
+		//Problem updating inventory's quantity
+		if(!$this->db->query($sql) || $this->db->affected_rows==0)
+		{
+			echo "problem with updating inventory's info".PHP_EOL;
+			return false;
+		}
+	}
+
+	/*
+	Get the item id for items in inventory, to be used with ADMIN update inventory quantity and update inventory information
+	*/
+	public function ADMIN_getUpdatableInventoryInfo()
+	{
+		//Check if admin rights to update information in the inventory
+		if(!$permission=$this->permissions(self::ADMIN, "update inventory information"))
+			return $permission;
+
+		$query= "SELECT item_id FROM inventory;";
+		$result= $this->db->query($query);
+
+		$html= "<div class='form-group'><h5>NSN</h5>
+			<select class='form-control' name= 'item_id'>
+				<option disabled selected value> Select an NSN </option>";
+		while($row=$result->fetch_assoc())
+		{
+			$item_id= $row['item_id'];
+			$html .= "<option value= '$item_id'>$item_id</option>";
+		}
+		$html .= "</select></div>";
+		echo $html;
+	}
+
+	/*
+
+	*/
+	public function ADMIN_getUpdatableInventoryInfoForItemID($item_id)
+	{
+		//Check if admin rights to update information in the inventory
+		if(!$permission=$this->permissions(self::ADMIN, "update inventory information"))
+			return $permission;
+		echo "<h1>$item_id</h5>";
+		$query= "SELECT * FROM inventory WHERE item_id=$item_id;";
+		$result= $this->db->query($query);
+		return $result->fetch_assoc();
 	}
 
 	/*
@@ -643,6 +759,30 @@ class InventoryAccess
 			return false;
 		}	
 		return true;
+	}
+
+	/*
+	Get the order ids for orders not received yet, able to be deleted
+	*/
+	public function ADMIN_getDeletableOrders()
+	{
+		//Check if admin rights to update information in the inventory
+		if(!$permission=$this->permissions(self::ADMIN, "delete an Order"))
+			return $permission;
+
+		$query= "SELECT order_id FROM order_line_items WHERE date_received IS NULL GROUP BY order_id;";
+		$result= $this->db->query($query);
+
+		$html= "<div class='form-group'><h5>Order ID</h5>
+			<select class='form-control' name= 'order_id'>
+				<option disabled selected value> Select an Order ID </option>";
+		while($row=$result->fetch_assoc())
+		{
+			$order_id= $row['order_id'];
+			$html .= "<option value= '$order_id'>$order_id</option>";
+		}
+		$html .= "</select></div>";
+		echo $html;
 	}
 
 	/*
