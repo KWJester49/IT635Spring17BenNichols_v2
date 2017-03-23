@@ -114,6 +114,10 @@ class InventoryAccess
 
 				$sql= "INSERT INTO order_line_items (order_id, item_id, quantity, unit_price) VALUES ('$order_id', $item_id, $quantity, $unit_price);";
 				$this->db->query($sql);
+
+
+				$sql= "UPDATE inventory SET on_order= 1 WHERE item_id=$item_id;";
+				$this->db->query($sql);
 			}
 
 			fclose($file_input);
