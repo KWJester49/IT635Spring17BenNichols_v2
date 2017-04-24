@@ -55,8 +55,8 @@ else
 			<button type="button" class="btn btn-link" data-toggle="modal" data-target="#updateInventoryInfoWindow" style="font-size: 20px;">Update Inventory Information</button>
 		</div>
 		<div class="col-md-4">
-			<!--<button type="button" class="btn btn-link" data-toggle="modal" data-target="#" style="font-size: 20px;">Delete Vendor</button>-->
-			<!--<button type="button" class="btn btn-link" data-toggle="modal" data-target="#" style="font-size: 20px;">Delete Historical Usage</button>-->
+			<button type="button" class="btn btn-link" data-toggle="modal" data-target="#userReportWindow" style="font-size: 20px;">User Report</button>
+			
 		</div>
 	</div>
 </div>
@@ -237,6 +237,32 @@ else
 					<button type="submit" class="btn btn-primary">Delete Order</button>
 					<button type="button" class="btn btn-primary" data-dismiss="modal">Cancel</button>
 				</form>
+			</div>
+
+		</div>
+
+	</div>	
+</div>
+
+<!--Users Report modal -->
+<div id="userReportWindow" class="modal fade" role="dialog">
+	<div class="modal-dialog">
+		
+		<!--User Report modal content -->
+		<div class="modal-content">
+			
+			<div class="modal-header">
+				<h4 class="modal-title">
+					Users
+				</h4>
+				<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+			</div>
+
+			<div class="modal-body">
+				<?php
+					$db->ADMIN_reportUsers();
+				?>
+				<button type="button" class="btn btn-primary" data-dismiss="modal">Close</button>
 			</div>
 
 		</div>

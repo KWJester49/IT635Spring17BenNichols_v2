@@ -34,7 +34,7 @@ class InventoryAccess
 	public function databaseLogin($username,$password)
 	{
 		$db_username = $this->db->real_escape_string($username);
-		$db_password = $this->db->real_escape_string($password);
+		$db_password = md5($this->db->real_escape_string($password));
 
 		$query = "select * from users where user_name = '$db_username';";
 		$result= $this->db->query($query);
@@ -586,6 +586,8 @@ class InventoryAccess
 		echo $html;
 	}
 
+
+
 	/*
 	Add an item to the database.
 	Supply technicians (USER) should be able to add items smartly (be trained),
@@ -825,6 +827,45 @@ class InventoryAccess
 		}	
 		return true;
 	}
+
+		/*
+	Displays a report of the users and their md5 passwords
+	*/
+	public function ADMIN_reportUsers()
+	{
+		//Check if user has permission to see this report
+		if(!$permission=$this->permissions(self::ADMIN, "run a user report"))
+			return $permission;
+
+		$query="SELECT user_name, password FROM users;";
+		$result=$this->db->query($query);
+
+		$html= "<div class='container'><div class='row'><div class='col-md-12'>
+				<table class='table table-bordered table-striped table-condensed table-responsive' style='margin: auto;'>
+					<thead>
+						<tr>
+							<th>User Name</th>
+							<th>MD5 Password</th>
+						</tr>
+					</thead>
+					<tbody>";
+		while ($row = $result->fetch_row())
+		{
+			
+			$html .= "<tr>";
+			for($i=0; $i<sizeof($row); $i++)
+			{
+				$html .= "<td> $row[$i] </td>";
+			}
+			$html .= "</tr>";
+		}
+		$html .= "	</tbody>
+				</table>
+				</div></div></div>";
+		echo $html;
+
+	}
+
 
 
 }

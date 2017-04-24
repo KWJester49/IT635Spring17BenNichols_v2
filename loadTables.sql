@@ -35,6 +35,10 @@ INTO TABLE users
 	LINES TERMINATED BY '\n'
 (user_name, password, permissions);
 
+UPDATE users
+SET password= MD5(password);
+
+
 LOAD DATA LOCAL INFILE 'csvFiles/orders.csv'
 INTO TABLE orders 
 	FIELDS TERMINATED BY ','
