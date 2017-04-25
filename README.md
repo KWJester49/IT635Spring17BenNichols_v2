@@ -1,5 +1,30 @@
 # IT635Spring17BenNichols_v2
 
+Final Project
+
+
+Master-Slave Replication:
+
+Master IP Address: 10.0.2.15
+Slave IP Address:
+
+Master: 
+1. Make the following changes in /etc/mysql/mysql.conf.d/mysqld.cnf:
+
+1.1. bind-address = 10.0.2.15
+1.2. server-id = 1
+1.3. log_bin = /var/log/mysql/mysql-bin.log
+1.4. binlog_do_db = MainORDB
+
+2. Refresh MySQL
+
+3. Open MySQL and do the following:
+
+3.1 GRANT REPLICATION SLAVE ON *.* TO 'slave_user'@'%' IDENTIFIED BY '12345';
+3.2 FLUSH PRIVILEGES;
+
+4. make a backup file of database.
+
 In order to get .csv files to load, I had to do the following:
 
 1. Open Terminal
@@ -29,3 +54,4 @@ In order to get php to run locally, I had to do the following:
 			ForceType application/x-httpd-php
 		</FilesMatch>
 3. Restart apache with: sudo service apache2 restart
+
