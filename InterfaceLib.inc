@@ -4,6 +4,7 @@ class InventoryAccess
 {
 	
 	private $db;
+	//private $mdb;
 	private $permission;
 	const GUEST=0;//Low level access of reports, cannot change anything in database
 	const USER=3;//General user of the database and supply storeroom. Above plus can receive items, submit order files, and use items.
@@ -17,6 +18,9 @@ class InventoryAccess
 			echo "error connecting to databse: ".$this->db->connect_error.PHP_EOL;
 			exit();
 		}
+		//$mdb = new MongoDB\Driver\Manager("mongodb://webuser:psychotrope13@ds123311.mlab.com:23311/it635");	
+		//$command = new MongoDB\Driver\Command(['ping' => 1]);
+		//$mdb->executeCommand('db', $command);
 	}
 
 	public function __destruct()
@@ -63,6 +67,29 @@ class InventoryAccess
 			echo "<h3>Do not have authorization to $task_error_msg.</h3>";
 			return false;
 		}
+	}
+
+	/*
+	This function will take the results from a mongo query and turn them from std class objects to arrays, including sub arrays.
+	*/
+	function mongoTypeMap($responseValue)
+	{
+
+		$returnValue=$responseValue;
+		if($responseValue instanceof \stdClass)
+		{
+			$returnValue= (array)$responseValue;
+		}
+
+		if(is_array($returnValue))
+		{
+			foreach ($returnValue as &$value) 
+			{
+				$value= mongoTypeMap($value);
+			}
+		}
+
+		return $returnValue;
 	}
 
 		/*
@@ -355,6 +382,17 @@ class InventoryAccess
 		if(!$permission=$this->permissions(self::GUEST, "run an Inventory Report"))
 			return $permission;
 		
+		//Get mongo data about inventory
+		$mdb = new MongoDB\Driver\Manager("mongodb://webuser:psychotrope13@ds123311.mlab.com:23311/it635");	
+		$command = new MongoDB\Driver\Command(['ping' => 1]);
+		$mdb->executeCommand('db', $command);
+		$filter = array();
+		$mongoQuery = new MongoDB\Driver\Query($filter);
+		$mongoResults = $mdb->executeQuery("it635.item_purposes",$mongoQuery);
+		$mongoResults->setTypeMap(['root'=>'array', 'document' =>'array', 'array'=>'array']);
+		$mongoData=$mongoResults->toArray();
+		
+		//get MySQL inventory data
 		$query= "SELECT inventory.item_id, items.item_name, items.item_desc, inventory.quantity, inventory.location, inventory.par_level, inventory.on_order
 			FROM inventory, items WHERE inventory.item_id=items.item_id;";
 		$result = $this->db->query($query);
@@ -369,12 +407,14 @@ class InventoryAccess
 							<th>Location</th>
 							<th>Par Level</th>
 							<th>On Order</th>
+							<th>Purpose</th>
 						</tr>
 					</thead>
 					<tbody>";
 		while ($row = $result->fetch_row())
 		{
 			$html .= "<tr>";
+			$item_id= intval($row[0]);
 			for($i=0; $i<sizeof($row); $i++)
 			{
 				if($i==6)
@@ -390,6 +430,17 @@ class InventoryAccess
 				}
 				$html .= "<td> $row[$i] </td>";
 			}
+
+			//search through the results of mongo search for their NSN, output the purpose
+			$purpose= "";
+			for($i=0; $i<sizeof($mongoData); $i++)
+			{
+				if($item_id==$mongoData[$i]['item_id'])
+				{
+					$purpose=$mongoData[$i]['purpose'];
+				}
+			}
+			$html .= "<td> $purpose</td>";
 			$html .= "</tr>";
 		}
 		$html .= "	</tbody>
