@@ -58,9 +58,17 @@ function respectTypeMap($responseValue)
 		echo "Purpose: $purpose".PHP_EOL;
 	}
 	$writer= new MongoDB\Driver\BulkWrite;
-	$writer->insert(array("item_id"=>6515000002157,"purpose"=>"tool to set up IV"));
+	//$writer->insert(array("item_id"=>6515000002157,"purpose"=>"tool to set up IV"));
 	//$mdb->executeBulkWrite("it635.item_purposes", $writer);
-
+	$filter= array('item_id'=>6515000002157);
+	$query=  new MongoDB\Driver\Query($filter);
+	$cursor= $mdb->executeQuery("it635.item_purposes",$query);
+	$cursor->setTypeMap(['root'=>'array', 'document' =>'array', 'arra'=>'array']);
+	$row=$cursor->toArray();
+	$_id=$row[0]['_id'];
+	echo "$_id".PHP_EOL;
+	$writer->delete(array("item_id"=>6515000002157));
+	$mdb->executeBulkWrite("it635.item_purposes", $writer);
 	
 }
 catch(exception $e)

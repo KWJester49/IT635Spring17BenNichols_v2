@@ -350,6 +350,209 @@ class InventoryAccess
 	}
 
 	/*
+	This function is used to update the par level (low water mark) of an item in the inventory.
+	*/
+	public function updateItemExtraInfo($item_id, $purpose, $usage_info, $warning_info)
+	{
+		//Make sure user has the permissions to update the par level.
+		if(!$permission=$this->permissions(self::USER, "update extra info"))
+			return $permission;
+
+		$mdb = new MongoDB\Driver\Manager("mongodb://webuser:psychotrope13@ds123311.mlab.com:23311/it635");	
+		$command = new MongoDB\Driver\Command(['ping' => 1]);
+		$mdb->executeCommand('db', $command);
+
+		$writer= new MongoDB\Driver\BulkWrite;
+		$writer->delete(array("item_id"=>$item_id));
+		$mdb->executeBulkWrite("it635.item_purposes", $writer);
+		$writer->insert(array("item_id"=>$item_id,"purpose"=>$purpose, "usage_info"=>$usage_info, "warning_info"=>$warning_info));
+		$mdb->executeBulkWrite("it635.item_purposes", $writer);
+		
+	}
+	
+
+	/*
+	Get items from inventory table to add a purpose to.
+	*/
+	public function getItemsAddExtraInfo()
+	{
+		//Make sure user has the permissions to update the par level.
+		if(!$permission=$this->permissions(self::USER, "update extra info"))
+			return $permission;
+
+		$query= "SELECT item_id FROM inventory;";
+		$result= $this->db->query($query);
+
+		$html= "<div class='form-group'>
+					<h5>NSN</h5>
+					<select class='form-control' name='purposeItem'>
+						<option disabled selected value> Select an NSN </option>";
+		while($row=$result->fetch_assoc())
+		{
+			$item_id= $row['item_id'];
+			$html .= "<option value=$item_id>$item_id</option>";
+		}
+		$html .= "</select>
+			<h5>Purpose</h5><input type='text' name='purpose'>
+			<h5>Usage Info</h5><input type='text' name='usage_info'>
+			<h5>Warning Info</h5><input type='text' name='warning_info'></div>";
+		echo $html;
+	}
+
+	/*
+	This function is used display inventory matching the specified purpose.
+	*/
+	public function displayItemsByPurpose($purpose)
+	{
+		//Make sure user has the permissions to update the par level.
+		if(!$permission=$this->permissions(self::GUEST, "search for item by purpose"))
+			return $permission;
+
+		$mdb = new MongoDB\Driver\Manager("mongodb://webuser:psychotrope13@ds123311.mlab.com:23311/it635");	
+		$command = new MongoDB\Driver\Command(['ping' => 1]);
+		$mdb->executeCommand('db', $command);
+
+		$filter=  array('purpose'=>"$purpose");
+		$mongoQuery = new MongoDB\Driver\Query($filter);
+		$mongoResults = $mdb->executeQuery("it635.item_purposes",$mongoQuery);
+		$mongoResults->setTypeMap(['root'=>'array', 'document' =>'array', 'arra'=>'array']);
+		$mongoData=$mongoResults->toArray();
+		$item_ids=array();
+		for($i=0;$i<sizeof($mongoData);$i++)
+		{
+			$item_ids[]=intval($mongoData[$i]['item_id']);
+		}
+		
+		//get MySQL inventory data
+		$query= "SELECT inventory.item_id, items.item_name, items.item_desc, inventory.quantity, inventory.location, inventory.par_level, inventory.on_order
+			FROM inventory, items WHERE inventory.item_id=items.item_id;";
+		$result = $this->db->query($query);
+		$html= "<!DOCTYPE html>
+<html>
+<head>
+	<title>Inventory Page</title>
+	<meta charset='utf-8'>
+	<meta name='viewport' content='width=device-width, initial-scale=1'>
+	<link rel='stylesheet' href='css/bootstrap.min.css'>
+	<link rel='stylesheet' href='css/databaseCSS.css'>
+	<script src='https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js'></script>
+	<script src='js/bootstrap.min.js'></script>
+</head>
+<body>
+
+<div class='row'>
+	<div class='col-md-12'>
+
+				<div class='container'><div class='row'><div class='col-md'12'>
+				<table class='table table-bordered table-striped table-condensed table-responsive'>
+					<thead>
+						<tr>
+							<th>National Stock Number</th>
+							<th>Item Name</th>
+							<th>Item Description</th>
+							<th>Quantity</th>
+							<th>Location</th>
+							<th>Par Level</th>
+							<th>On Order</th>
+							<th>Purpose</th>
+							<th>Usage Info</th>
+							<th>Warning Info</th>
+						</tr>
+					</thead>
+					<tbody>";
+		while ($row = $result->fetch_row())
+		{
+			$item_id= $row[0];
+			if(in_array($item_id, $item_ids))
+			{
+				$html .= "<tr>";
+				
+				for($i=0; $i<sizeof($row); $i++)
+				{
+					if($i==6)
+					{
+						if($row[$i]==1)
+						{
+							$row[$i]="Yes";
+						}
+						else
+						{
+							$row[$i]="No";
+						}
+					}
+					$html .= "<td> $row[$i] </td>";
+				}
+
+				//search through the results of mongo search for their NSN, output the purpose
+				$purpose= "";
+				$usage_info="";
+				$warning_info="";
+				for($i=0; $i<sizeof($mongoData); $i++)
+				{
+					if($item_id==$mongoData[$i]['item_id'])
+					{
+						$purpose=$mongoData[$i]['purpose'];
+						$usage_info=$mongoData[$i]['usage_info'];;
+						$warning_info=$mongoData[$i]['warning_info'];;
+					}
+				}
+				$html .= "<td> $purpose</td>";
+				$html .= "<td> $usage_info</td>";
+				$html .= "<td> $warning_info</td>";
+				$html .= "</tr>";
+			}
+		}
+		$html .= "	</tbody>
+				</table>
+				</div></div></div></div></div></body></html>";
+		echo $html;
+		
+	}
+	
+
+	/*
+	Get items from inventory table to add a purpose to.
+	*/
+	public function getItemsByPurpose()
+	{
+		//Make sure user has the permissions to update the par level.
+		if(!$permission=$this->permissions(self::GUEST, "search for item by purpose"))
+			return $permission;
+
+		$mdb = new MongoDB\Driver\Manager("mongodb://webuser:psychotrope13@ds123311.mlab.com:23311/it635");	
+		$command = new MongoDB\Driver\Command(['ping' => 1]);
+		$mdb->executeCommand('db', $command);
+		$filter=  array();
+		$query = new MongoDB\Driver\Query($filter);
+		$results = $mdb->executeQuery("it635.item_purposes",$query);
+		$results->setTypeMap(['root'=>'array', 'document' =>'array', 'arra'=>'array']);
+		$row=$results->toArray();
+		$purposes=array();
+		for($i=0;$i< sizeof($row);$i++)
+		{
+			$purpose=$row[$i]['purpose'];
+			if(!in_array($purpose, $purposes))
+			{
+				$purposes[]=$purpose;
+			}
+			
+		}
+
+		
+		$html= "<div class='form-group'>
+					<h5>Purposes</h5>
+					<select class='form-control' name='purposeItem'>
+						<option disabled selected value> Select a purpose </option>";
+		for($i=0;$i< sizeof($purposes);$i++)
+		{
+			$purpose= $purposes[$i];
+			$html .= "<option value='$purpose'>$purpose</option>";
+		}
+		$html .= "</select></div>";
+		echo $html;
+	}	
+
+	/*
 	This function will remove an item from inventory if it is no longer carried
 	*/
 	public function deleteItemFromInventory($item_id)
@@ -408,6 +611,8 @@ class InventoryAccess
 							<th>Par Level</th>
 							<th>On Order</th>
 							<th>Purpose</th>
+							<th>Usage Info</th>
+							<th>Warning Info</th>
 						</tr>
 					</thead>
 					<tbody>";
@@ -433,14 +638,20 @@ class InventoryAccess
 
 			//search through the results of mongo search for their NSN, output the purpose
 			$purpose= "";
+			$usage_info="";
+			$warning_info="";
 			for($i=0; $i<sizeof($mongoData); $i++)
 			{
 				if($item_id==$mongoData[$i]['item_id'])
 				{
 					$purpose=$mongoData[$i]['purpose'];
+					$usage_info=$mongoData[$i]['usage_info'];;
+					$warning_info=$mongoData[$i]['warning_info'];;
 				}
 			}
 			$html .= "<td> $purpose</td>";
+			$html .= "<td> $usage_info</td>";
+			$html .= "<td> $warning_info</td>";
 			$html .= "</tr>";
 		}
 		$html .= "	</tbody>

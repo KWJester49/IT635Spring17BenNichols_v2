@@ -40,7 +40,9 @@ else
 			<div class="btn-group btn-group-justified">
 				<button type="button" class="btn btn-success" data-toggle="modal" data-target="#useItemsWindow">Use Items</button>
 				<button type="button" class="btn btn-success" data-toggle="modal" data-target="#updateParWindow">Update Par Levels</button>
-				<button type="button" class="btn btn-success" data-toggle="modal" data-target="#addPurposeWindow">Add Purpose</button>
+				<button type="button" class="btn btn-success" data-toggle="modal" data-target="#addPurposeWindow">Add Extra Info</button>
+				<button type="button" class="btn btn-success" data-toggle="modal" data-target="#searchPurposeWindow">Search Items by Purpose</button>
+
 			</div>
 		</div>
 		<div class="col-md-3"></div>
@@ -109,7 +111,7 @@ else
 	</div>	
 </div>
 
-<!--Add Purpose modal -->
+<!--Add Extra modal -->
 <div id="addPurposeWindow" class="modal fade" role="dialog">
 	<div class="modal-dialog">
 		
@@ -118,19 +120,50 @@ else
 			
 			<div class="modal-header">
 				<h4 class="modal-title">
-					Use Items
+					Add extra information to item
 				</h4>
 				<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
 			</div>
 
 			<div class="modal-body">
-				<p>Select item and a medical purpose for it.</p>
+				<p>Select item and update the medical information for it.</p>
 				<p></p>
-				<form id="addPurposeForm" action=".php" method="post" role="form" style="padding: 16px;">
+				<form id="addPurposeForm" action="updateItemExtraInfo.php" method="post" role="form" style="padding: 16px;">
 					<?php
-						
+						$db->getItemsAddExtraInfo();
 					?>
-					<button type="submit" class="btn btn-primary">Add Purpose</button>
+					<button type="submit" class="btn btn-primary">Update Info</button>
+					<button type="button" class="btn btn-primary" data-dismiss="modal">Cancel</button>
+				</form>
+			</div>
+
+		</div>
+
+	</div>	
+</div>
+
+<!--Search by purpose modal -->
+<div id="searchPurposeWindow" class="modal fade" role="dialog">
+	<div class="modal-dialog">
+		
+		<!--Login modal content -->
+		<div class="modal-content">
+			
+			<div class="modal-header">
+				<h4 class="modal-title">
+					Search for items by purpose
+				</h4>
+				<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+			</div>
+
+			<div class="modal-body">
+				<p>Search for items by purpose.</p>
+				<p></p>
+				<form id="searchPurposeForm" action="searchItemPurpose.php" method="post" role="form" style="padding: 16px;">
+					<?php
+						$db->getItemsByPurpose();
+					?>
+					<button type="submit" class="btn btn-primary">Search</button>
 					<button type="button" class="btn btn-primary" data-dismiss="modal">Cancel</button>
 				</form>
 			</div>
@@ -141,13 +174,11 @@ else
 </div>
 
 <div class="row">
-	<div class="col-md-1"></div>
-	<div class="col-md-10">
+	<div class="col-md-12">
 		<?php
 			$db->reportInventory();
 		?>
 	</div>
-	<div class="col-md-1"></div>
 </div>
 
 
