@@ -439,7 +439,7 @@ class InventoryAccess
 	<script src='js/bootstrap.min.js'></script>
 </head>
 <body>
-
+<div class='text-center'><h3>Search Results for: $purpose</h3></div>
 <div class='row'>
 	<div class='col-md-12'>
 
